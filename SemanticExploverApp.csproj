@@ -22,13 +22,12 @@
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="../SemanticExploverApp.Core/SemanticExploverApp.Core.csproj" />
-  </ItemGroup>
 
-  <!-- архивные примеры из документации не входят в рабочую сборку -->
+  <!-- документация не входит в рабочую сборку приложения -->
   <ItemGroup>
     <Compile Remove="docs/**/*.cs" />
+    <EmbeddedResource Remove="docs/**/*" />
+    <None Remove="docs/**/*" />
     <AvaloniaXaml Remove="docs/**/*.axaml" />
   </ItemGroup>
 </Project>

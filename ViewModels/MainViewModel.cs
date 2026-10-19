@@ -3,7 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
-using SemanticExploverApp.Core;
+using SemanticExploverApp.Models;
 using SemanticExploverApp.Services;
 
 namespace SemanticExploverApp.ViewModels;
