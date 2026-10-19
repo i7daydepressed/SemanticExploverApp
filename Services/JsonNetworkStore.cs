@@ -37,7 +37,7 @@ public sealed class JsonNetworkStore : INetworkStore
             throw new InvalidDataException("Вместо объекта сети получено значение null.");
         }
 
-        // проверяем форму данных до передачи в интерфейс, связи между узлами проверит следующий этап
+        // проверяем форму данных, а согласованность связей затем проверяет отдельный валидатор
         EnsureReadableStructure(network);
         return network;
     }

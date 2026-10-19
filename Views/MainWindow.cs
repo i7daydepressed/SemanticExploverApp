@@ -26,9 +26,13 @@ public class MainWindow : Window
 
     private Control CreateLayout()
     {
-        StackPanel layout = new StackPanel
+        Grid root = new Grid
         {
             Margin = new Thickness(24),
+            RowDefinitions = new RowDefinitions("Auto,*")
+        };
+        StackPanel layout = new StackPanel
+        {
             Spacing = 16
         };
 
@@ -52,7 +56,22 @@ public class MainWindow : Window
         layout.Children.Add(CreateBoundText(nameof(MainViewModel.FileName)));
         layout.Children.Add(CreateBoundText(nameof(MainViewModel.NetworkSummary)));
         layout.Children.Add(CreateBoundText(nameof(MainViewModel.StatusMessage)));
-        return layout;
+        root.Children.Add(layout);
+
+        // список ошибок прокручивается отдельно и не вытесняет кнопку открытия за границы окна
+        ScrollViewer errors = new ScrollViewer
+        {
+            Margin = new Thickness(0, 12, 0, 0),
+            HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
+            VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
+            Content = CreateBoundText(nameof(MainViewModel.ValidationMessage))
+        };
+        errors.Bind(
+            ScrollViewer.IsVisibleProperty,
+            new Binding(nameof(MainViewModel.HasValidationErrors)));
+        Grid.SetRow(errors, 1);
+        root.Children.Add(errors);
+        return root;
     }
 
     private static TextBlock CreateBoundText(string propertyName)
