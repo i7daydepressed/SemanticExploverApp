@@ -18,7 +18,7 @@ public partial class MainWindow
         panel.Children.Add(new TextBlock { Text = "Запрос к сети", FontSize = 17 });
         TextBlock notice = new TextBlock
         {
-            Text = "Параметры можно выбрать. Выполнение запросов подключим следующим этапом.",
+            Text = "Выберите параметры и выполните запрос. Ответ появится справа.",
             TextWrapping = TextWrapping.Wrap,
             FontSize = 12,
             Margin = new Thickness(0, 8, 0, 8)
@@ -61,7 +61,9 @@ public partial class MainWindow
         fields.Children.Add(CreateField("Отношение", relation));
         fields.Children.Add(CreateField("Направление", CreateChoicePicker(
             new List<string> { "Исходящие", "Входящие" }, nameof(MainViewModel.NeighborDirectionIndex))));
-        fields.Children.Add(new Button { Content = "Найти соседей", IsEnabled = false });
+        Button execute = new Button { Content = "Найти соседей" };
+        execute.Bind(Button.CommandProperty, new Binding(nameof(MainViewModel.FindNeighborsCommand)));
+        fields.Children.Add(execute);
         return CreateScroll(fields);
     }
 
@@ -72,7 +74,9 @@ public partial class MainWindow
             CreateNodePicker(nameof(MainViewModel.ClassNodes), nameof(MainViewModel.HierarchyClass))));
         fields.Children.Add(CreateField("Направление", CreateChoicePicker(
             new List<string> { "Предки", "Потомки" }, nameof(MainViewModel.HierarchyDirectionIndex))));
-        fields.Children.Add(new Button { Content = "Показать иерархию", IsEnabled = false });
+        Button execute = new Button { Content = "Показать иерархию" };
+        execute.Bind(Button.CommandProperty, new Binding(nameof(MainViewModel.FindHierarchyCommand)));
+        fields.Children.Add(execute);
         return CreateScroll(fields);
     }
 
@@ -83,7 +87,9 @@ public partial class MainWindow
             CreateNodePicker(nameof(MainViewModel.Nodes), nameof(MainViewModel.QuerySource))));
         fields.Children.Add(CreateField("Конечный узел",
             CreateNodePicker(nameof(MainViewModel.Nodes), nameof(MainViewModel.QueryTarget))));
-        fields.Children.Add(new Button { Content = "Найти путь", IsEnabled = false });
+        Button execute = new Button { Content = "Найти путь" };
+        execute.Bind(Button.CommandProperty, new Binding(nameof(MainViewModel.FindPathCommand)));
+        fields.Children.Add(execute);
         return CreateScroll(fields);
     }
 

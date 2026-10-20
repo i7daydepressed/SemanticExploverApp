@@ -1,7 +1,11 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Data;
 using Avalonia.Layout;
+using Avalonia.Media;
+using Avalonia.Styling;
+using SemanticExploverApp.Models;
 using SemanticExploverApp.ViewModels;
 
 namespace SemanticExploverApp.Views;
@@ -16,14 +20,36 @@ public partial class MainWindow
         issues.Bind(TextBlock.IsVisibleProperty, new Binding(nameof(MainViewModel.HasValidationErrors)));
         validation.Children.Add(issues);
 
-        TextBlock result = CreateBoundText(nameof(MainViewModel.QueryResultText));
-        result.Margin = new Thickness(0, 10, 0, 0);
+        Grid result = new Grid { RowDefinitions = new RowDefinitions("Auto,*") };
+        TextBlock summary = CreateBoundText(nameof(MainViewModel.QueryResultText));
+        summary.Margin = new Thickness(0, 10, 0, 8);
+        ScrollViewer summaryScroll = CreateScroll(summary);
+        summaryScroll.MaxHeight = 136;
+        result.Children.Add(summaryScroll);
+        ListBox items = new ListBox {
+            ItemTemplate = new FuncDataTemplate<QueryResultItem>((QueryResultItem item, INameScope _) =>
+                new TextBlock {
+                    Text = item.DisplayText,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 4)
+                })
+        };
+        items.SetValue(ScrollViewer.HorizontalScrollBarVisibilityProperty,
+            Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled);
+        items.Styles.Add(new Style((Selector? selector) => selector.OfType<ListBoxItem>()) {
+            Setters = { new Setter(ListBoxItem.HorizontalContentAlignmentProperty, HorizontalAlignment.Stretch) }
+        });
+        items.Bind(ItemsControl.ItemsSourceProperty, new Binding(nameof(MainViewModel.QueryResultItems)));
+        items.Bind(ListBox.SelectedItemProperty,
+            new Binding(nameof(MainViewModel.SelectedResultItem)) { Mode = BindingMode.TwoWay });
+        Grid.SetRow(items, 1);
+        result.Children.Add(items);
         // список ошибок прокручивается отдельно и не вытесняет кнопку открытия за границы окна
         TabControl tabs = new TabControl
         {
             ItemsSource = new TabItem[]
             {
-                new TabItem { Header = "Результат", Content = CreateScroll(result) },
+                new TabItem { Header = "Результат", Content = result },
                 new TabItem { Header = "Проверка", Content = CreateScroll(validation) }
             }
         };

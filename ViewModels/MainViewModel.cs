@@ -23,6 +23,7 @@ public partial class MainViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(Relations))]
     [NotifyPropertyChangedFor(nameof(CanConfigureQuery))]
     [NotifyPropertyChangedFor(nameof(GraphPlaceholder))]
+    [NotifyCanExecuteChangedFor(nameof(FindNeighborsCommand), nameof(FindHierarchyCommand), nameof(FindPathCommand))]
     public partial SemanticNetwork? Network { get; set; }
 
     [ObservableProperty]
@@ -38,6 +39,7 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanOpenNetwork))]
     [NotifyPropertyChangedFor(nameof(CanConfigureQuery))]
+    [NotifyCanExecuteChangedFor(nameof(FindNeighborsCommand), nameof(FindHierarchyCommand), nameof(FindPathCommand))]
     public partial bool IsBusy { get; set; }
 
     [ObservableProperty]
@@ -47,24 +49,30 @@ public partial class MainViewModel : ViewModelBase
     public partial NodeDetails SelectedNodeDetails { get; set; } = NodeDetails.Empty;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(FindNeighborsCommand), nameof(FindPathCommand))]
     public partial SemanticNode? QuerySource { get; set; }
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(FindPathCommand))]
     public partial SemanticNode? QueryTarget { get; set; }
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(FindHierarchyCommand))]
     public partial SemanticNode? HierarchyClass { get; set; }
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(FindNeighborsCommand))]
     public partial RelationDefinition? QueryRelation { get; set; }
 
     [ObservableProperty]
     public partial int QueryModeIndex { get; set; }
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(FindNeighborsCommand))]
     public partial int NeighborDirectionIndex { get; set; }
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(FindHierarchyCommand))]
     public partial int HierarchyDirectionIndex { get; set; }
 
     [ObservableProperty]
@@ -86,7 +94,6 @@ public partial class MainViewModel : ViewModelBase
     public string GraphPlaceholder => Network is null
         ? "Откройте файл семантической сети."
         : "Сеть загружена. Визуализация графа пока недоступна.";
-    public string QueryResultText => "Запрос еще не выполнен.";
 
     public string NetworkSummary => Network is null
         ? "Сеть пока не загружена."
@@ -113,6 +120,9 @@ public partial class MainViewModel : ViewModelBase
     {
         SelectedNodeDetails = Network is null
             ? NodeDetails.Empty : detailsService.GetDetails(Network, value);
+        if (SelectedResultItem is not null && SelectedResultItem.Node.Id != value?.Id) {
+            SelectedResultItem = null;
+        }
     }
 
     partial void OnNetworkChanged(SemanticNetwork? value)
@@ -124,6 +134,7 @@ public partial class MainViewModel : ViewModelBase
         QueryTarget = null;
         HierarchyClass = null;
         QueryRelation = null;
+        ResetQueryResults();
     }
 
     private void InitializeQueryParameters()

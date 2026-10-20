@@ -49,8 +49,8 @@ public partial class MainWindow
         {
             Setters =
             {
-                new Setter(TabItem.BackgroundProperty, new SolidColorBrush(Color.Parse("#2563EB"))),
-                new Setter(TabItem.BorderBrushProperty, new SolidColorBrush(Color.Parse("#2563EB"))),
+                new Setter(TabItem.BackgroundProperty, new SolidColorBrush(Color.Parse("#15803D"))),
+                new Setter(TabItem.BorderBrushProperty, new SolidColorBrush(Color.Parse("#15803D"))),
                 new Setter(TabItem.ForegroundProperty, Brushes.White)
             }
         });
@@ -58,7 +58,7 @@ public partial class MainWindow
         {
             Setters =
             {
-                new Setter(TabItem.BackgroundProperty, new SolidColorBrush(Color.Parse("#1D4ED8")))
+                new Setter(TabItem.BackgroundProperty, new SolidColorBrush(Color.Parse("#166534")))
             }
         });
         tabs.Styles.Add(new Style((Selector? selector) => selector.OfType<TabItem>().Class(":focus-visible"))
