@@ -14,9 +14,15 @@ public partial class MainViewModel : ViewModelBase
 {
     private readonly INetworkStore networkStore;
     private readonly NetworkValidationService validationService;
+    private readonly NetworkDetailsService detailsService = new NetworkDetailsService();
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(NetworkSummary))]
+    [NotifyPropertyChangedFor(nameof(Nodes))]
+    [NotifyPropertyChangedFor(nameof(ClassNodes))]
+    [NotifyPropertyChangedFor(nameof(Relations))]
+    [NotifyPropertyChangedFor(nameof(CanConfigureQuery))]
+    [NotifyPropertyChangedFor(nameof(GraphPlaceholder))]
     public partial SemanticNetwork? Network { get; set; }
 
     [ObservableProperty]
@@ -31,10 +37,56 @@ public partial class MainViewModel : ViewModelBase
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanOpenNetwork))]
+    [NotifyPropertyChangedFor(nameof(CanConfigureQuery))]
     public partial bool IsBusy { get; set; }
 
+    [ObservableProperty]
+    public partial SemanticNode? SelectedNode { get; set; }
+
+    [ObservableProperty]
+    public partial NodeDetails SelectedNodeDetails { get; set; } = NodeDetails.Empty;
+
+    [ObservableProperty]
+    public partial SemanticNode? QuerySource { get; set; }
+
+    [ObservableProperty]
+    public partial SemanticNode? QueryTarget { get; set; }
+
+    [ObservableProperty]
+    public partial SemanticNode? HierarchyClass { get; set; }
+
+    [ObservableProperty]
+    public partial RelationDefinition? QueryRelation { get; set; }
+
+    [ObservableProperty]
+    public partial int QueryModeIndex { get; set; }
+
+    [ObservableProperty]
+    public partial int NeighborDirectionIndex { get; set; }
+
+    [ObservableProperty]
+    public partial int HierarchyDirectionIndex { get; set; }
+
+    [ObservableProperty]
+    public partial int RightTabIndex { get; set; }
+
+    [ObservableProperty]
+    public partial int NodeTabIndex { get; set; }
+
     public bool CanOpenNetwork => !IsBusy;
+    public bool CanConfigureQuery => Network is not null && !IsBusy;
     public bool HasValidationErrors => !string.IsNullOrEmpty(ValidationMessage);
+    public IReadOnlyList<SemanticNode> Nodes => Network is null
+        ? Array.Empty<SemanticNode>() : Network.Nodes;
+    public IReadOnlyList<SemanticNode> ClassNodes => Network is null
+        ? Array.Empty<SemanticNode>()
+        : Network.Nodes.Where((SemanticNode node) => node.Kind == "class").ToArray();
+    public IReadOnlyList<RelationDefinition> Relations => Network is null
+        ? Array.Empty<RelationDefinition>() : Network.Relations;
+    public string GraphPlaceholder => Network is null
+        ? "Откройте файл семантической сети."
+        : "Сеть загружена. Визуализация графа пока недоступна.";
+    public string QueryResultText => "Запрос еще не выполнен.";
 
     public string NetworkSummary => Network is null
         ? "Сеть пока не загружена."
@@ -57,6 +109,32 @@ public partial class MainViewModel : ViewModelBase
         this.validationService = validationService;
     }
 
+    partial void OnSelectedNodeChanged(SemanticNode? value)
+    {
+        SelectedNodeDetails = Network is null
+            ? NodeDetails.Empty : detailsService.GetDetails(Network, value);
+    }
+
+    partial void OnNetworkChanged(SemanticNetwork? value)
+    {
+        // старые выбранные объекты не должны оставаться привязанными к новому набору данных
+        SelectedNode = null;
+        SelectedNodeDetails = NodeDetails.Empty;
+        QuerySource = null;
+        QueryTarget = null;
+        HierarchyClass = null;
+        QueryRelation = null;
+    }
+
+    private void InitializeQueryParameters()
+    {
+        QuerySource = Nodes.FirstOrDefault();
+        QueryTarget = Nodes.FirstOrDefault((SemanticNode node) => node.Kind == "literal")
+            ?? Nodes.FirstOrDefault();
+        HierarchyClass = ClassNodes.FirstOrDefault();
+        QueryRelation = Relations.FirstOrDefault();
+    }
+
     public async Task LoadNetworkAsync(Stream stream, string fileName)
     {
         StatusMessage = "Чтение файла...";
@@ -73,25 +151,31 @@ public partial class MainViewModel : ViewModelBase
                     Environment.NewLine,
                     issues.Select((NetworkValidationIssue issue) => issue.DisplayText));
                 StatusMessage = $"Файл «{fileName}» отклонен: ошибок — {issues.Count}.";
+                RightTabIndex = 1;
                 return;
             }
 
             // заменяем состояние только после успешного чтения, ошибка не стирает предыдущую сеть
             Network = loadedNetwork;
             FileName = fileName;
+            InitializeQueryParameters();
+            RightTabIndex = 0;
             StatusMessage = "Файл загружен. Проверка сети пройдена.";
         }
         catch (JsonException exception)
         {
             StatusMessage = $"Некорректный JSON: {exception.Message}";
+            RightTabIndex = 1;
         }
         catch (InvalidDataException exception)
         {
             StatusMessage = $"Неподходящий формат сети: {exception.Message}";
+            RightTabIndex = 1;
         }
         catch (IOException exception)
         {
             StatusMessage = $"Не удалось прочитать файл: {exception.Message}";
+            RightTabIndex = 1;
         }
     }
 }
