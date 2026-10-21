@@ -21,7 +21,6 @@ public partial class MainViewModel : ViewModelBase { // состояние гл�
     [NotifyPropertyChangedFor(nameof(ClassNodes))]
     [NotifyPropertyChangedFor(nameof(Relations))]
     [NotifyPropertyChangedFor(nameof(CanConfigureQuery))]
-    [NotifyPropertyChangedFor(nameof(GraphPlaceholder))]
     [NotifyCanExecuteChangedFor(nameof(FindNeighborsCommand), nameof(FindHierarchyCommand), nameof(FindPathCommand))]
     public partial SemanticNetwork? Network { get; set; }
 
@@ -90,9 +89,6 @@ public partial class MainViewModel : ViewModelBase { // состояние гл�
         : Network.Nodes.Where((SemanticNode node) => node.Kind == "class").ToArray();
     public IReadOnlyList<RelationDefinition> Relations => Network is null
         ? Array.Empty<RelationDefinition>() : Network.Relations;
-    public string GraphPlaceholder => Network is null
-        ? "Откройте файл семантической сети."
-        : "Сеть загружена. Визуализация графа пока недоступна.";
 
     public string NetworkSummary => Network is null
         ? "Сеть пока не загружена."

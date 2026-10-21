@@ -28,73 +28,109 @@ public partial class MainWindow : Window { // главное окно
     // собираем основную разметку окна
     private Control CreateLayout() {
         Grid root = new Grid {
-            Margin = new Thickness(16),
-            RowDefinitions = new RowDefinitions("Auto,*,240")
+            Margin = new Thickness(12),
+            RowDefinitions = new RowDefinitions("Auto,*,6,160")
         };
+        root.RowDefinitions[1].MinHeight = 180;
+        root.RowDefinitions[3].MinHeight = 96;
         root.Children.Add(CreateHeader());
 
         Control workspace = CreateWorkspace();
         Grid.SetRow(workspace, 1);
         root.Children.Add(workspace);
 
+        GridSplitter horizontal = CreatePanelSplitter(GridResizeDirection.Rows);
+        Grid.SetRow(horizontal, 2);
+        root.Children.Add(horizontal);
         Control details = CreateNodePanel();
-        Grid.SetRow(details, 2);
+        Grid.SetRow(details, 3);
         root.Children.Add(details);
         return root;
     }
 
-    // собираем заголовок, кнопку открытия и статус
+    // помещаем название и файл в одну строку, сводку и статус в следующую
     private Control CreateHeader() {
         Grid header = new Grid {
-            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
-            RowDefinitions = new RowDefinitions("Auto,Auto,Auto,Auto")
+            ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"),
+            RowDefinitions = new RowDefinitions("Auto,Auto")
         };
         header.Children.Add(new TextBlock {
             Text = "SemanticExploverApp",
-            FontSize = 20,
-            FontWeight = FontWeight.SemiBold
+            FontSize = 18,
+            FontWeight = FontWeight.SemiBold,
+            VerticalAlignment = VerticalAlignment.Center
         });
+        TextBlock fileName = CreateBoundText(nameof(MainViewModel.FileName));
+        fileName.Margin = new Thickness(14, 0, 14, 0);
+        fileName.VerticalAlignment = VerticalAlignment.Center;
+        fileName.TextWrapping = TextWrapping.NoWrap;
+        fileName.TextTrimming = TextTrimming.CharacterEllipsis;
+        fileName.Bind(ToolTip.TipProperty, new Binding(nameof(MainViewModel.FileName)));
+        Grid.SetColumn(fileName, 1);
+        header.Children.Add(fileName);
 
         Button openButton = new Button { Content = "Открыть сеть" };
         openButton.Bind(Button.IsEnabledProperty, new Binding(nameof(MainViewModel.CanOpenNetwork)));
         openButton.Click += OpenNetworkButton_OnClick;
-        Grid.SetColumn(openButton, 1);
+        Grid.SetColumn(openButton, 2);
         header.Children.Add(openButton);
 
-        TextBlock fileName = CreateBoundText(nameof(MainViewModel.FileName));
-        fileName.Margin = new Thickness(0, 6, 12, 0);
-        Grid.SetRow(fileName, 1);
-        header.Children.Add(fileName);
-
+        Grid information = new Grid {
+            ColumnDefinitions = new ColumnDefinitions("Auto,*"),
+            Margin = new Thickness(0, 6, 0, 0)
+        };
         TextBlock summary = CreateBoundText(nameof(MainViewModel.NetworkSummary));
-        summary.Margin = new Thickness(0, 4, 12, 0);
-        Grid.SetRow(summary, 2);
-        header.Children.Add(summary);
-
+        summary.FontSize = 12;
+        summary.Margin = new Thickness(0, 0, 14, 0);
+        information.Children.Add(summary);
         TextBlock status = CreateBoundText(nameof(MainViewModel.StatusMessage));
         status.FontSize = 12;
-        status.Margin = new Thickness(0, 4, 0, 0);
-        Grid.SetRow(status, 3);
-        Grid.SetColumnSpan(status, 2);
-        header.Children.Add(status);
+        status.TextWrapping = TextWrapping.NoWrap;
+        status.TextTrimming = TextTrimming.CharacterEllipsis;
+        status.Bind(ToolTip.TipProperty, new Binding(nameof(MainViewModel.StatusMessage)));
+        Grid.SetColumn(status, 1);
+        information.Children.Add(status);
+        Grid.SetRow(information, 1);
+        Grid.SetColumnSpan(information, 3);
+        header.Children.Add(information);
         return header;
     }
 
-    // раскладываем запросы, граф и ответ по колонкам
+    // ширину боковых панелей можно менять, свободная ширина остается графу
     private Control CreateWorkspace() {
-        // две узкие колонки служат промежутками, свободная ширина остается графу
         Grid workspace = new Grid {
-            ColumnDefinitions = new ColumnDefinitions("270,12,*,12,300"),
-            Margin = new Thickness(0, 12, 0, 12)
+            ColumnDefinitions = new ColumnDefinitions("260,6,*,6,280"),
+            Margin = new Thickness(0, 8, 0, 0)
         };
+        workspace.ColumnDefinitions[0].MinWidth = 240;
+        workspace.ColumnDefinitions[2].MinWidth = 260;
+        workspace.ColumnDefinitions[4].MinWidth = 240;
         workspace.Children.Add(CreateQueryPanel());
+        GridSplitter left = CreatePanelSplitter(GridResizeDirection.Columns);
+        Grid.SetColumn(left, 1);
+        workspace.Children.Add(left);
         Control graph = CreateGraphPanel();
         Grid.SetColumn(graph, 2);
         workspace.Children.Add(graph);
+        GridSplitter right = CreatePanelSplitter(GridResizeDirection.Columns);
+        Grid.SetColumn(right, 3);
+        workspace.Children.Add(right);
         Control result = CreateResultPanel();
         Grid.SetColumn(result, 4);
         workspace.Children.Add(result);
         return workspace;
+    }
+
+    // разделитель меняет соседние строки или колонки и учитывает их минимальные размеры
+    private static GridSplitter CreatePanelSplitter(GridResizeDirection direction) {
+        return new GridSplitter {
+            ResizeDirection = direction,
+            ResizeBehavior = GridResizeBehavior.PreviousAndNext,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Background = new SolidColorBrush(Color.FromArgb(60, 128, 128, 128)),
+            Focusable = true
+        };
     }
 
     // добавляем рамку и отступы вокруг панели

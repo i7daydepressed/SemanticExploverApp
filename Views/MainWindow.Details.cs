@@ -81,9 +81,14 @@ public partial class MainWindow { // панели результата и све
         panel.Children.Add(heading);
 
         StackPanel description = new StackPanel { Spacing = 4, Margin = new Thickness(0, 6, 0, 0) };
-        description.Children.Add(CreateBoundText("SelectedNodeDetails.Title"));
-        description.Children.Add(CreateField("ID", CreateBoundText("SelectedNodeDetails.Id")));
-        description.Children.Add(CreateField("Тип", CreateBoundText("SelectedNodeDetails.Kind")));
+        WrapPanel identifiers = new WrapPanel();
+        identifiers.Children.Add(new TextBlock { Text = "ID:", Margin = new Thickness(0, 0, 4, 0) });
+        TextBlock id = CreateBoundText("SelectedNodeDetails.Id");
+        id.Margin = new Thickness(0, 0, 18, 0);
+        identifiers.Children.Add(id);
+        identifiers.Children.Add(new TextBlock { Text = "Тип:", Margin = new Thickness(0, 0, 4, 0) });
+        identifiers.Children.Add(CreateBoundText("SelectedNodeDetails.Kind"));
+        description.Children.Add(identifiers);
         description.Children.Add(CreateBoundText("SelectedNodeDetails.Description"));
         TabControl tabs = new TabControl {
             ItemsSource = new TabItem[] {
