@@ -4,15 +4,13 @@ using SemanticExploverApp.Models;
 
 namespace SemanticExploverApp.Services;
 
-public sealed class NetworkValidationService
-{
-    private static readonly HashSet<string> KnownKinds = new HashSet<string>(StringComparer.Ordinal)
-    {
+public sealed class NetworkValidationService { // проверка согласованности сети
+    private static readonly HashSet<string> KnownKinds = new HashSet<string>(StringComparer.Ordinal) {
         "class", "instance", "literal"
     };
 
-    public IReadOnlyList<NetworkValidationIssue> Validate(SemanticNetwork network)
-    {
+    // собираем ошибки согласованности сети
+    public IReadOnlyList<NetworkValidationIssue> Validate(SemanticNetwork network) {
         ArgumentNullException.ThrowIfNull(network);
 
         // сюда поступает объект после структурной проверки JsonNetworkStore
@@ -25,8 +23,7 @@ public sealed class NetworkValidationService
             network.Relations, (RelationDefinition relation) => relation.Id, "relations", issues);
         BuildIndex(network.Edges, (SemanticEdge edge) => edge.Id, "edges", issues);
 
-        for (int index = 0; index < network.Nodes.Count; index++)
-        {
+        for (int index = 0; index < network.Nodes.Count; index++) {
             SemanticNode node = network.Nodes[index];
             ValidateSourceRefs(node.SourceRefs, $"nodes[{index}] ({node.Id})", sources, issues);
         }
@@ -37,22 +34,20 @@ public sealed class NetworkValidationService
         return issues.AsReadOnly();
     }
 
+    // строим индекс по ID и отмечаем дубликаты
     private static Dictionary<string, T> BuildIndex<T>(
         IReadOnlyList<T> items,
         Func<T, string> getId,
         string collectionName,
-        List<NetworkValidationIssue> issues)
-    {
+        List<NetworkValidationIssue> issues) {
         Dictionary<string, T> result = new Dictionary<string, T>(StringComparer.Ordinal);
 
-        for (int index = 0; index < items.Count; index++)
-        {
+        for (int index = 0; index < items.Count; index++) {
             T item = items[index];
             string id = getId(item);
 
             // сохраняем первое определение для дальнейших проверок, но дубликат уже делает сеть непригодной
-            if (!result.TryAdd(id, item))
-            {
+            if (!result.TryAdd(id, item)) {
                 issues.Add(new NetworkValidationIssue(
                     "duplicate_id",
                     $"{collectionName}[{index}].id",
@@ -63,12 +58,11 @@ public sealed class NetworkValidationService
         return result;
     }
 
+    // проверяем каталог отношений
     private static void ValidateRelations(
         IReadOnlyList<RelationDefinition> relations,
-        List<NetworkValidationIssue> issues)
-    {
-        for (int index = 0; index < relations.Count; index++)
-        {
+        List<NetworkValidationIssue> issues) {
+        for (int index = 0; index < relations.Count; index++) {
             RelationDefinition relation = relations[index];
             string location = $"relations[{index}] ({relation.Id})";
             ValidateKinds(relation.SourceKinds, location + ".sourceKinds", issues);
@@ -77,8 +71,7 @@ public sealed class NetworkValidationService
             // направление иерархии имеет смысл только между классами, даже если каталог ошибочно разрешил иные виды
             if (relation.Id == "subclass_of" &&
                 (relation.SourceKinds.Count != 1 || relation.SourceKinds[0] != "class" ||
-                 relation.TargetKinds.Count != 1 || relation.TargetKinds[0] != "class"))
-            {
+                 relation.TargetKinds.Count != 1 || relation.TargetKinds[0] != "class")) {
                 issues.Add(new NetworkValidationIssue(
                     "invalid_hierarchy_relation", location,
                     "Отношение subclass_of должно соединять class → class."));
@@ -86,22 +79,19 @@ public sealed class NetworkValidationService
         }
     }
 
+    // проверяем допустимые виды узлов в отношении
     private static void ValidateKinds(
         IReadOnlyList<string> kinds,
         string location,
-        List<NetworkValidationIssue> issues)
-    {
-        if (kinds.Count == 0)
-        {
+        List<NetworkValidationIssue> issues) {
+        if (kinds.Count == 0) {
             issues.Add(new NetworkValidationIssue(
                 "empty_relation_kinds", location,
                 "Нужно указать хотя бы один допустимый вид узла."));
         }
 
-        for (int index = 0; index < kinds.Count; index++)
-        {
-            if (!KnownKinds.Contains(kinds[index]))
-            {
+        for (int index = 0; index < kinds.Count; index++) {
+            if (!KnownKinds.Contains(kinds[index])) {
                 issues.Add(new NetworkValidationIssue(
                     "unknown_node_kind", $"{location}[{index}]",
                     $"Неизвестный вид узла «{kinds[index]}». Допустимы class, instance, literal."));
@@ -109,15 +99,14 @@ public sealed class NetworkValidationService
         }
     }
 
+    // проверяем концы связей, отношения и источники
     private static void ValidateEdges(
         IReadOnlyList<SemanticEdge> edges,
         Dictionary<string, SemanticNode> nodes,
         Dictionary<string, RelationDefinition> relations,
         Dictionary<string, KnowledgeSource> sources,
-        List<NetworkValidationIssue> issues)
-    {
-        for (int index = 0; index < edges.Count; index++)
-        {
+        List<NetworkValidationIssue> issues) {
+        for (int index = 0; index < edges.Count; index++) {
             SemanticEdge edge = edges[index];
             string location = $"edges[{index}] ({edge.Id})";
             ValidateSourceRefs(edge.SourceRefs, location, sources, issues);
@@ -125,39 +114,33 @@ public sealed class NetworkValidationService
             bool hasTarget = nodes.TryGetValue(edge.Target, out SemanticNode? target);
             bool hasRelation = relations.TryGetValue(edge.Relation, out RelationDefinition? relation);
 
-            if (!hasSource)
-            {
+            if (!hasSource) {
                 issues.Add(new NetworkValidationIssue(
                     "unknown_source_node", location + ".source",
                     $"Узел «{edge.Source}» отсутствует."));
             }
 
-            if (!hasTarget)
-            {
+            if (!hasTarget) {
                 issues.Add(new NetworkValidationIssue(
                     "unknown_target_node", location + ".target",
                     $"Узел «{edge.Target}» отсутствует."));
             }
 
-            if (!hasRelation)
-            {
+            if (!hasRelation) {
                 issues.Add(new NetworkValidationIssue(
                     "unknown_relation", location + ".relation",
                     $"Отношение «{edge.Relation}» отсутствует в каталоге."));
             }
 
             // типы проверяем только у тех концов и отношений, которые удалось найти
-            if (hasRelation && relation is not null)
-            {
-                if (hasSource && source is not null && !relation.SourceKinds.Contains(source.Kind))
-                {
+            if (hasRelation && relation is not null) {
+                if (hasSource && source is not null && !relation.SourceKinds.Contains(source.Kind)) {
                     issues.Add(new NetworkValidationIssue(
                         "invalid_source_kind", location + ".source",
                         $"Узел «{edge.Source}» имеет вид {source.Kind}, недопустимый для начала отношения «{edge.Relation}»."));
                 }
 
-                if (hasTarget && target is not null && !relation.TargetKinds.Contains(target.Kind))
-                {
+                if (hasTarget && target is not null && !relation.TargetKinds.Contains(target.Kind)) {
                     issues.Add(new NetworkValidationIssue(
                         "invalid_target_kind", location + ".target",
                         $"Узел «{edge.Target}» имеет вид {target.Kind}, недопустимый для конца отношения «{edge.Relation}»."));
@@ -166,16 +149,14 @@ public sealed class NetworkValidationService
         }
     }
 
+    // проверяем ссылки на источники знаний
     private static void ValidateSourceRefs(
         IReadOnlyList<string> sourceRefs,
         string location,
         Dictionary<string, KnowledgeSource> sources,
-        List<NetworkValidationIssue> issues)
-    {
-        for (int index = 0; index < sourceRefs.Count; index++)
-        {
-            if (!sources.ContainsKey(sourceRefs[index]))
-            {
+        List<NetworkValidationIssue> issues) {
+        for (int index = 0; index < sourceRefs.Count; index++) {
+            if (!sources.ContainsKey(sourceRefs[index])) {
                 issues.Add(new NetworkValidationIssue(
                     "unknown_knowledge_source", $"{location}.sourceRefs[{index}]",
                     $"Источник «{sourceRefs[index]}» отсутствует в sources."));
@@ -187,31 +168,26 @@ public sealed class NetworkValidationService
     // обходим их своим стеком: path хранит текущую цепочку, а кадр — следующего родителя
     // переход к узлу этой цепочки замыкает цикл, а завершенный общий предок цикла не создает
     // при первом цикле добавляем сообщение с замкнутым путем и прекращаем поиск циклов
+    // ищем первый цикл в иерархии классов
     private static void ValidateHierarchy(
         IReadOnlyList<SemanticEdge> edges,
         Dictionary<string, SemanticNode> nodes,
         Dictionary<string, RelationDefinition> relations,
-        List<NetworkValidationIssue> issues)
-    {
-        if (!relations.ContainsKey("subclass_of"))
-        {
+        List<NetworkValidationIssue> issues) {
+        if (!relations.ContainsKey("subclass_of")) {
             return;
         }
 
         Dictionary<string, List<string>> parents = new Dictionary<string, List<string>>(StringComparer.Ordinal);
-        foreach (SemanticNode node in nodes.Values)
-        {
-            if (node.Kind == "class")
-            {
+        foreach (SemanticNode node in nodes.Values) {
+            if (node.Kind == "class") {
                 parents.Add(node.Id, new List<string>());
             }
         }
 
-        foreach (SemanticEdge edge in edges)
-        {
+        foreach (SemanticEdge edge in edges) {
             if (edge.Relation == "subclass_of" &&
-                parents.ContainsKey(edge.Source) && parents.ContainsKey(edge.Target))
-            {
+                parents.ContainsKey(edge.Source) && parents.ContainsKey(edge.Target)) {
                 parents[edge.Source].Add(edge.Target);
             }
         }
@@ -221,10 +197,8 @@ public sealed class NetworkValidationService
         List<string> path = new List<string>();
         Stack<(string NodeId, int NextIndex)> stack = new Stack<(string NodeId, int NextIndex)>();
 
-        foreach (string start in parents.Keys)
-        {
-            if (states.ContainsKey(start))
-            {
+        foreach (string start in parents.Keys) {
+            if (states.ContainsKey(start)) {
                 continue;
             }
 
@@ -232,13 +206,11 @@ public sealed class NetworkValidationService
             path.Add(start);
             stack.Push((start, 0));
 
-            while (stack.Count > 0)
-            {
+            while (stack.Count > 0) {
                 (string NodeId, int NextIndex) frame = stack.Pop();
                 List<string> nextNodes = parents[frame.NodeId];
 
-                if (frame.NextIndex >= nextNodes.Count)
-                {
+                if (frame.NextIndex >= nextNodes.Count) {
                     states[frame.NodeId] = 2;
                     path.RemoveAt(path.Count - 1);
                     continue;
@@ -248,10 +220,8 @@ public sealed class NetworkValidationService
                 stack.Push((frame.NodeId, frame.NextIndex + 1));
                 string next = nextNodes[frame.NextIndex];
 
-                if (states.TryGetValue(next, out int state))
-                {
-                    if (state == 1)
-                    {
+                if (states.TryGetValue(next, out int state)) {
+                    if (state == 1) {
                         int cycleStart = path.IndexOf(next);
                         List<string> cycle = path.GetRange(cycleStart, path.Count - cycleStart);
                         cycle.Add(next);

@@ -5,7 +5,8 @@ using SemanticExploverApp.Models;
 
 namespace SemanticExploverApp.Services;
 
-public sealed class NetworkQueryService {
+public sealed class NetworkQueryService { // поиск по сети
+    // ищем соседей по отношению и направлению
     public NetworkQueryResult GetNeighbors(
         SemanticNetwork network, string nodeId, string relationId, bool incoming = false) {
         QueryGraph graph = new QueryGraph(network);
@@ -31,6 +32,7 @@ public sealed class NetworkQueryService {
         return new NetworkQueryResult(summary, items.AsReadOnly());
     }
 
+    // ищем предков или потомков класса по subclass_of
     public NetworkQueryResult GetHierarchy(SemanticNetwork network, string classId, bool descendants = false) {
         QueryGraph graph = new QueryGraph(network);
         SemanticNode start = graph.RequireNode(classId);
@@ -75,6 +77,7 @@ public sealed class NetworkQueryService {
             items.AsReadOnly());
     }
 
+    // ищем кратчайший путь по направлению дуг
     public NetworkQueryResult FindPath(SemanticNetwork network, string sourceId, string targetId) {
         QueryGraph graph = new QueryGraph(network);
         SemanticNode source = graph.RequireNode(sourceId);
@@ -127,6 +130,7 @@ public sealed class NetworkQueryService {
     // идем по previous от конца к началу и затем разворачиваем список фактов
     // для потомков возвращаемся по Target, сами дуги не переворачиваем
     // на исходном узле останавливаемся: для пути к себе список сразу остается пустым
+    // восстанавливаем цепочку фактов из previous
     private static List<SemanticEdge> BuildWitness(
         string startId, string endId, Dictionary<string, SemanticEdge> previous, bool incoming) {
         List<SemanticEdge> edges = new List<SemanticEdge>();
@@ -141,13 +145,14 @@ public sealed class NetworkQueryService {
         return edges;
     }
 
-    private sealed class QueryGraph {
+    private sealed class QueryGraph { // индексы сети для запроса
         public Dictionary<string, SemanticNode> Nodes { get; }
         public Dictionary<string, RelationDefinition> Relations { get; }
         public Dictionary<string, List<SemanticEdge>> Outgoing { get; }
         public Dictionary<string, List<SemanticEdge>> Incoming { get; }
         private readonly Dictionary<string, KnowledgeSource> sources;
 
+        // строим индексы узлов, отношений и дуг
         public QueryGraph(SemanticNetwork network) {
             ArgumentNullException.ThrowIfNull(network);
             // сервис получает сеть после валидатора, ссылки и ID в ней уже проверены
@@ -167,6 +172,7 @@ public sealed class NetworkQueryService {
             }
         }
 
+        // получаем узел по ID или сообщаем об ошибке
         public SemanticNode RequireNode(string nodeId) {
             if (!Nodes.TryGetValue(nodeId, out SemanticNode? node)) {
                 throw new ArgumentException($"Неизвестный узел: {nodeId}", nameof(nodeId));
@@ -175,6 +181,7 @@ public sealed class NetworkQueryService {
             return node;
         }
 
+        // собираем текст факта с его источниками и допущением
         public string FormatFact(SemanticEdge edge) {
             string fact = $"{edge.Id}: {Nodes[edge.Source].Label} [{edge.Source}] — " +
                 $"{Relations[edge.Relation].Label} [{edge.Relation}] → {Nodes[edge.Target].Label} [{edge.Target}]";

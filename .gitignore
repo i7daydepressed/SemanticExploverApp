@@ -7,6 +7,7 @@
 # локальные данные IDE
 .vs/
 .idea/
+/.editorconfig
 *.suo
 *.user
 *.userosscache

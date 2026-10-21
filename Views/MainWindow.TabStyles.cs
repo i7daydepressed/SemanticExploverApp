@@ -8,22 +8,18 @@ using Avalonia.Styling;
 
 namespace SemanticExploverApp.Views;
 
-public partial class MainWindow
-{
-    private static void ApplyButtonTabStyle(TabControl tabs)
-    {
+public partial class MainWindow { // стили вкладок
+    // оформляем вкладки как кнопки
+    private static void ApplyButtonTabStyle(TabControl tabs) {
         // меняем только заголовки, выбор вкладки и ее содержимое по-прежнему ведет TabControl
-        tabs.ItemsPanel = new FuncTemplate<Panel?>(() => new StackPanel
-        {
+        tabs.ItemsPanel = new FuncTemplate<Panel?>(() => new StackPanel {
             Orientation = Orientation.Horizontal,
             Spacing = 4
         });
         tabs.Padding = new Thickness(0, 10, 0, 0);
 
-        Style normal = new Style((Selector? selector) => selector.OfType<TabItem>())
-        {
-            Setters =
-            {
+        Style normal = new Style((Selector? selector) => selector.OfType<TabItem>()) {
+            Setters = {
                 new Setter(TabItem.FontSizeProperty, 13.0),
                 new Setter(TabItem.FontWeightProperty, FontWeight.Normal),
                 new Setter(TabItem.HeightProperty, 34.0),
@@ -38,42 +34,33 @@ public partial class MainWindow
             }
         };
         tabs.Styles.Add(normal);
-        tabs.Styles.Add(new Style((Selector? selector) => selector.OfType<TabItem>().Class(":pointerover"))
-        {
-            Setters =
-            {
+        tabs.Styles.Add(new Style((Selector? selector) => selector.OfType<TabItem>().Class(":pointerover")) {
+            Setters = {
                 new Setter(TabItem.BackgroundProperty, new SolidColorBrush(Color.FromArgb(85, 128, 128, 128)))
             }
         });
-        tabs.Styles.Add(new Style((Selector? selector) => selector.OfType<TabItem>().Class(":selected"))
-        {
-            Setters =
-            {
+        tabs.Styles.Add(new Style((Selector? selector) => selector.OfType<TabItem>().Class(":selected")) {
+            Setters = {
                 new Setter(TabItem.BackgroundProperty, new SolidColorBrush(Color.Parse("#15803D"))),
                 new Setter(TabItem.BorderBrushProperty, new SolidColorBrush(Color.Parse("#15803D"))),
                 new Setter(TabItem.ForegroundProperty, Brushes.White)
             }
         });
-        tabs.Styles.Add(new Style((Selector? selector) => selector.OfType<TabItem>().Class(":selected").Class(":pointerover"))
-        {
-            Setters =
-            {
+        tabs.Styles.Add(new Style((Selector? selector) => selector.OfType<TabItem>().Class(":selected").Class(":pointerover")) {
+            Setters = {
                 new Setter(TabItem.BackgroundProperty, new SolidColorBrush(Color.Parse("#166534")))
             }
         });
-        tabs.Styles.Add(new Style((Selector? selector) => selector.OfType<TabItem>().Class(":focus-visible"))
-        {
-            Setters =
-            {
+        tabs.Styles.Add(new Style((Selector? selector) => selector.OfType<TabItem>().Class(":focus-visible")) {
+            Setters = {
                 new Setter(TabItem.BorderBrushProperty, new SolidColorBrush(Color.Parse("#D97706")))
             }
         });
     }
 
-    private static Control CreateButtonTabHeader(TabItem item, INameScope nameScope)
-    {
-        TextBlock label = new TextBlock
-        {
+    // собираем заголовок из текста и оформления вкладки
+    private static Control CreateButtonTabHeader(TabItem item, INameScope nameScope) {
+        TextBlock label = new TextBlock {
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.NoWrap

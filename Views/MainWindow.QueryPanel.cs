@@ -10,14 +10,12 @@ using SemanticExploverApp.ViewModels;
 
 namespace SemanticExploverApp.Views;
 
-public partial class MainWindow
-{
-    private Control CreateQueryPanel()
-    {
+public partial class MainWindow { // панель запросов
+    // собираем вкладки запросов
+    private Control CreateQueryPanel() {
         Grid panel = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto,*") };
         panel.Children.Add(new TextBlock { Text = "Запрос к сети", FontSize = 17 });
-        TextBlock notice = new TextBlock
-        {
+        TextBlock notice = new TextBlock {
             Text = "Выберите параметры и выполните запрос. Ответ появится справа.",
             TextWrapping = TextWrapping.Wrap,
             FontSize = 12,
@@ -26,10 +24,8 @@ public partial class MainWindow
         Grid.SetRow(notice, 1);
         panel.Children.Add(notice);
 
-        TabControl tabs = new TabControl
-        {
-            ItemsSource = new TabItem[]
-            {
+        TabControl tabs = new TabControl {
+            ItemsSource = new TabItem[] {
                 new TabItem { Header = "Соседи", Content = CreateNeighborQuery() },
                 new TabItem { Header = "Иерархия", Content = CreateHierarchyQuery() },
                 new TabItem { Header = "Путь", Content = CreatePathQuery() }
@@ -43,13 +39,12 @@ public partial class MainWindow
         return CreatePane(panel);
     }
 
-    private static Control CreateNeighborQuery()
-    {
+    // собираем параметры и кнопку поиска соседей
+    private static Control CreateNeighborQuery() {
         StackPanel fields = new StackPanel { Spacing = 10, Margin = new Thickness(0, 10, 0, 0) };
         fields.Children.Add(CreateField("Узел",
             CreateNodePicker(nameof(MainViewModel.Nodes), nameof(MainViewModel.QuerySource))));
-        ComboBox relation = new ComboBox
-        {
+        ComboBox relation = new ComboBox {
             HorizontalAlignment = HorizontalAlignment.Stretch,
             ItemTemplate = new FuncDataTemplate<RelationDefinition>((RelationDefinition item, INameScope _) =>
                 new TextBlock { Text = item?.Label ?? string.Empty, TextWrapping = TextWrapping.Wrap })
@@ -67,8 +62,8 @@ public partial class MainWindow
         return CreateScroll(fields);
     }
 
-    private static Control CreateHierarchyQuery()
-    {
+    // собираем параметры и кнопку поиска по иерархии
+    private static Control CreateHierarchyQuery() {
         StackPanel fields = new StackPanel { Spacing = 10, Margin = new Thickness(0, 10, 0, 0) };
         fields.Children.Add(CreateField("Класс",
             CreateNodePicker(nameof(MainViewModel.ClassNodes), nameof(MainViewModel.HierarchyClass))));
@@ -80,8 +75,8 @@ public partial class MainWindow
         return CreateScroll(fields);
     }
 
-    private static Control CreatePathQuery()
-    {
+    // собираем параметры и кнопку поиска пути
+    private static Control CreatePathQuery() {
         StackPanel fields = new StackPanel { Spacing = 10, Margin = new Thickness(0, 10, 0, 0) };
         fields.Children.Add(CreateField("Начальный узел",
             CreateNodePicker(nameof(MainViewModel.Nodes), nameof(MainViewModel.QuerySource))));
@@ -93,18 +88,17 @@ public partial class MainWindow
         return CreateScroll(fields);
     }
 
-    private static Control CreateField(string label, Control input)
-    {
+    // добавляем подпись к полю
+    private static Control CreateField(string label, Control input) {
         StackPanel field = new StackPanel { Spacing = 4 };
         field.Children.Add(new TextBlock { Text = label });
         field.Children.Add(input);
         return field;
     }
 
-    private static ComboBox CreateChoicePicker(IReadOnlyList<string> choices, string propertyName)
-    {
-        ComboBox picker = new ComboBox
-        {
+    // создаём список вариантов с привязкой выбора
+    private static ComboBox CreateChoicePicker(IReadOnlyList<string> choices, string propertyName) {
+        ComboBox picker = new ComboBox {
             ItemsSource = choices,
             HorizontalAlignment = HorizontalAlignment.Stretch
         };

@@ -10,10 +10,9 @@ using SemanticExploverApp.ViewModels;
 
 namespace SemanticExploverApp.Views;
 
-public partial class MainWindow
-{
-    private static Control CreateResultPanel()
-    {
+public partial class MainWindow { // панели результата и сведений об узле
+    // собираем вкладки ответа и ошибок проверки
+    private static Control CreateResultPanel() {
         StackPanel validation = new StackPanel { Spacing = 10, Margin = new Thickness(0, 10, 0, 0) };
         validation.Children.Add(CreateBoundText(nameof(MainViewModel.StatusMessage)));
         TextBlock issues = CreateBoundText(nameof(MainViewModel.ValidationMessage));
@@ -45,10 +44,8 @@ public partial class MainWindow
         Grid.SetRow(items, 1);
         result.Children.Add(items);
         // список ошибок прокручивается отдельно и не вытесняет кнопку открытия за границы окна
-        TabControl tabs = new TabControl
-        {
-            ItemsSource = new TabItem[]
-            {
+        TabControl tabs = new TabControl {
+            ItemsSource = new TabItem[] {
                 new TabItem { Header = "Результат", Content = result },
                 new TabItem { Header = "Проверка", Content = CreateScroll(validation) }
             }
@@ -59,16 +56,14 @@ public partial class MainWindow
         return CreatePane(tabs);
     }
 
-    private static Control CreateNodePanel()
-    {
+    // собираем выбор узла и вкладки его сведений
+    private static Control CreateNodePanel() {
         Grid panel = new Grid { RowDefinitions = new RowDefinitions("Auto,*") };
-        Grid heading = new Grid
-        {
+        Grid heading = new Grid {
             ColumnDefinitions = new ColumnDefinitions("Auto,*,320"),
             Margin = new Thickness(0, 0, 0, 6)
         };
-        heading.Children.Add(new TextBlock
-        {
+        heading.Children.Add(new TextBlock {
             Text = "Выбранный узел:",
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 8, 0)
@@ -90,10 +85,8 @@ public partial class MainWindow
         description.Children.Add(CreateField("ID", CreateBoundText("SelectedNodeDetails.Id")));
         description.Children.Add(CreateField("Тип", CreateBoundText("SelectedNodeDetails.Kind")));
         description.Children.Add(CreateBoundText("SelectedNodeDetails.Description"));
-        TabControl tabs = new TabControl
-        {
-            ItemsSource = new TabItem[]
-            {
+        TabControl tabs = new TabControl {
+            ItemsSource = new TabItem[] {
                 new TabItem { Header = "Описание", Content = CreateScroll(description) },
                 new TabItem { Header = "Связи", Content = CreateScroll(CreateBoundText("SelectedNodeDetails.RelationsText")) },
                 new TabItem { Header = "Источники", Content = CreateScroll(CreateBoundText("SelectedNodeDetails.SourcesText")) }

@@ -14,10 +14,9 @@ using SemanticExploverApp.ViewModels;
 
 namespace SemanticExploverApp.Views;
 
-public partial class MainWindow : Window
-{
-    public MainWindow()
-    {
+public partial class MainWindow : Window { // главное окно
+    // задаем размеры окна и создаём содержимое
+    public MainWindow() {
         Title = "SemanticExploverApp";
         Width = 1320;
         Height = 860;
@@ -26,10 +25,9 @@ public partial class MainWindow : Window
         Content = CreateLayout();
     }
 
-    private Control CreateLayout()
-    {
-        Grid root = new Grid
-        {
+    // собираем основную разметку окна
+    private Control CreateLayout() {
+        Grid root = new Grid {
             Margin = new Thickness(16),
             RowDefinitions = new RowDefinitions("Auto,*,240")
         };
@@ -45,15 +43,13 @@ public partial class MainWindow : Window
         return root;
     }
 
-    private Control CreateHeader()
-    {
-        Grid header = new Grid
-        {
+    // собираем заголовок, кнопку открытия и статус
+    private Control CreateHeader() {
+        Grid header = new Grid {
             ColumnDefinitions = new ColumnDefinitions("*,Auto"),
             RowDefinitions = new RowDefinitions("Auto,Auto,Auto,Auto")
         };
-        header.Children.Add(new TextBlock
-        {
+        header.Children.Add(new TextBlock {
             Text = "SemanticExploverApp",
             FontSize = 20,
             FontWeight = FontWeight.SemiBold
@@ -84,11 +80,10 @@ public partial class MainWindow : Window
         return header;
     }
 
-    private Control CreateWorkspace()
-    {
+    // раскладываем запросы, граф и ответ по колонкам
+    private Control CreateWorkspace() {
         // две узкие колонки служат промежутками, свободная ширина остается графу
-        Grid workspace = new Grid
-        {
+        Grid workspace = new Grid {
             ColumnDefinitions = new ColumnDefinitions("270,12,*,12,300"),
             Margin = new Thickness(0, 12, 0, 12)
         };
@@ -102,10 +97,9 @@ public partial class MainWindow : Window
         return workspace;
     }
 
-    private static Border CreatePane(Control content)
-    {
-        return new Border
-        {
+    // добавляем рамку и отступы вокруг панели
+    private static Border CreatePane(Control content) {
+        return new Border {
             Padding = new Thickness(12),
             BorderThickness = new Thickness(1),
             BorderBrush = new SolidColorBrush(Color.FromArgb(90, 128, 128, 128)),
@@ -114,32 +108,29 @@ public partial class MainWindow : Window
         };
     }
 
-    private static ScrollViewer CreateScroll(Control content)
-    {
-        return new ScrollViewer
-        {
+    // добавляем вертикальную прокрутку
+    private static ScrollViewer CreateScroll(Control content) {
+        return new ScrollViewer {
             HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
             VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
             Content = content
         };
     }
 
-    private static TextBlock CreateBoundText(string propertyName)
-    {
+    // создаём текст с привязкой к свойству
+    private static TextBlock CreateBoundText(string propertyName) {
         TextBlock text = new TextBlock { TextWrapping = TextWrapping.Wrap };
         text.Bind(TextBlock.TextProperty, new Binding(propertyName));
         return text;
     }
 
-    private static ComboBox CreateNodePicker(string itemsPath, string selectedPath)
-    {
-        ComboBox picker = new ComboBox
-        {
+    // создаём список узлов с привязкой выбора
+    private static ComboBox CreateNodePicker(string itemsPath, string selectedPath) {
+        ComboBox picker = new ComboBox {
             HorizontalAlignment = HorizontalAlignment.Stretch,
             MaxDropDownHeight = 320,
             ItemTemplate = new FuncDataTemplate<SemanticNode>((SemanticNode node, INameScope _) =>
-                new TextBlock
-                {
+                new TextBlock {
                     Text = node is null ? string.Empty : $"{node.Label} · {node.Id}",
                     TextWrapping = TextWrapping.Wrap
                 })
@@ -150,15 +141,13 @@ public partial class MainWindow : Window
         return picker;
     }
 
-    private async void OpenNetworkButton_OnClick(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is not MainViewModel viewModel || viewModel.IsBusy)
-        {
+    // выбираем файл и передаём его поток на загрузку
+    private async void OpenNetworkButton_OnClick(object? sender, RoutedEventArgs e) {
+        if (DataContext is not MainViewModel viewModel || viewModel.IsBusy) {
             return;
         }
 
-        if (!StorageProvider.CanOpen)
-        {
+        if (!StorageProvider.CanOpen) {
             viewModel.StatusMessage = "Выбор файлов недоступен в текущем окружении.";
             viewModel.RightTabIndex = 1;
             return;
@@ -167,21 +156,17 @@ public partial class MainWindow : Window
         // блокируем повторный выбор на все время диалога и чтения файла
         viewModel.IsBusy = true;
 
-        try
-        {
+        try {
             IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(
-                new FilePickerOpenOptions
-                {
+                new FilePickerOpenOptions {
                     Title = "Открыть семантическую сеть",
                     AllowMultiple = false,
-                    FileTypeFilter = new List<FilePickerFileType>
-                    {
+                    FileTypeFilter = new List<FilePickerFileType> {
                         new FilePickerFileType("Сеть JSON") { Patterns = new[] { "*.json" } }
                     }
                 });
 
-            if (files.Count == 0)
-            {
+            if (files.Count == 0) {
                 viewModel.StatusMessage = "Выбор файла отменен.";
                 return;
             }
@@ -189,21 +174,15 @@ public partial class MainWindow : Window
             IStorageFile selectedFile = files[0];
             await using Stream stream = await selectedFile.OpenReadAsync();
             await viewModel.LoadNetworkAsync(stream, selectedFile.Name);
-        }
-        catch (OperationCanceledException)
-        {
+        } catch (OperationCanceledException) {
             viewModel.StatusMessage = "Открытие файла отменено.";
-        }
-        catch (Exception exception) when (
-            exception is IOException ||
-            exception is UnauthorizedAccessException ||
-            exception is NotSupportedException)
-        {
+        } catch (Exception exception) when (
+                exception is IOException ||
+                exception is UnauthorizedAccessException ||
+                exception is NotSupportedException) {
             viewModel.StatusMessage = $"Не удалось открыть файл: {exception.Message}";
             viewModel.RightTabIndex = 1;
-        }
-        finally
-        {
+        } finally {
             viewModel.IsBusy = false;
         }
     }

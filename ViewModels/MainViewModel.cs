@@ -10,8 +10,7 @@ using SemanticExploverApp.Services;
 
 namespace SemanticExploverApp.ViewModels;
 
-public partial class MainViewModel : ViewModelBase
-{
+public partial class MainViewModel : ViewModelBase { // состояние главного окна
     private readonly INetworkStore networkStore;
     private readonly NetworkValidationService validationService;
     private readonly NetworkDetailsService detailsService = new NetworkDetailsService();
@@ -99,25 +98,25 @@ public partial class MainViewModel : ViewModelBase
         ? "Сеть пока не загружена."
         : $"Загружено: узлов — {Network.Nodes.Count}, связей — {Network.Edges.Count}, типов отношений — {Network.Relations.Count}.";
 
-    public MainViewModel() : this(new JsonNetworkStore())
-    {
+    // создаём модель с загрузчиком JSON
+    public MainViewModel() : this(new JsonNetworkStore()) {
     }
 
+    // подключаем загрузчик и стандартную проверку сети
     public MainViewModel(INetworkStore networkStore)
-        : this(networkStore, new NetworkValidationService())
-    {
+        : this(networkStore, new NetworkValidationService()) {
     }
 
-    public MainViewModel(INetworkStore networkStore, NetworkValidationService validationService)
-    {
+    // подключаем загрузчик и валидатор
+    public MainViewModel(INetworkStore networkStore, NetworkValidationService validationService) {
         ArgumentNullException.ThrowIfNull(networkStore);
         ArgumentNullException.ThrowIfNull(validationService);
         this.networkStore = networkStore;
         this.validationService = validationService;
     }
 
-    partial void OnSelectedNodeChanged(SemanticNode? value)
-    {
+    // обновляем сведения об узле и согласуем выбор строки
+    partial void OnSelectedNodeChanged(SemanticNode? value) {
         SelectedNodeDetails = Network is null
             ? NodeDetails.Empty : detailsService.GetDetails(Network, value);
         if (SelectedResultItem is not null && SelectedResultItem.Node.Id != value?.Id) {
@@ -125,8 +124,8 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
-    partial void OnNetworkChanged(SemanticNetwork? value)
-    {
+    // сбрасываем выбор и ответ при замене сети
+    partial void OnNetworkChanged(SemanticNetwork? value) {
         // старые выбранные объекты не должны оставаться привязанными к новому набору данных
         SelectedNode = null;
         SelectedNodeDetails = NodeDetails.Empty;
@@ -137,8 +136,8 @@ public partial class MainViewModel : ViewModelBase
         ResetQueryResults();
     }
 
-    private void InitializeQueryParameters()
-    {
+    // выбираем начальные параметры запросов
+    private void InitializeQueryParameters() {
         QuerySource = Nodes.FirstOrDefault();
         QueryTarget = Nodes.FirstOrDefault((SemanticNode node) => node.Kind == "literal")
             ?? Nodes.FirstOrDefault();
@@ -146,18 +145,16 @@ public partial class MainViewModel : ViewModelBase
         QueryRelation = Relations.FirstOrDefault();
     }
 
-    public async Task LoadNetworkAsync(Stream stream, string fileName)
-    {
+    // загружаем и принимаем сеть после успешной проверки
+    public async Task LoadNetworkAsync(Stream stream, string fileName) {
         StatusMessage = "Чтение файла...";
         ValidationMessage = string.Empty;
 
-        try
-        {
+        try {
             SemanticNetwork loadedNetwork = await networkStore.LoadAsync(stream);
             IReadOnlyList<NetworkValidationIssue> issues = validationService.Validate(loadedNetwork);
 
-            if (issues.Count > 0)
-            {
+            if (issues.Count > 0) {
                 ValidationMessage = string.Join(
                     Environment.NewLine,
                     issues.Select((NetworkValidationIssue issue) => issue.DisplayText));
@@ -172,19 +169,13 @@ public partial class MainViewModel : ViewModelBase
             InitializeQueryParameters();
             RightTabIndex = 0;
             StatusMessage = "Файл загружен. Проверка сети пройдена.";
-        }
-        catch (JsonException exception)
-        {
+        } catch (JsonException exception) {
             StatusMessage = $"Некорректный JSON: {exception.Message}";
             RightTabIndex = 1;
-        }
-        catch (InvalidDataException exception)
-        {
+        } catch (InvalidDataException exception) {
             StatusMessage = $"Неподходящий формат сети: {exception.Message}";
             RightTabIndex = 1;
-        }
-        catch (IOException exception)
-        {
+        } catch (IOException exception) {
             StatusMessage = $"Не удалось прочитать файл: {exception.Message}";
             RightTabIndex = 1;
         }

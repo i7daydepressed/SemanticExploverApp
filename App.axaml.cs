@@ -6,19 +6,16 @@ using SemanticExploverApp.Views;
 
 namespace SemanticExploverApp;
 
-public partial class App : Application
-{
-    public override void Initialize()
-    {
+public partial class App : Application { // приложение Avalonia
+    // загружаем ресурсы приложения
+    public override void Initialize() {
         AvaloniaXamlLoader.Load(this);
     }
 
-    public override void OnFrameworkInitializationCompleted()
-    {
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
-            desktop.MainWindow = new MainWindow
-            {
+    // создаём главное окно и его модель
+    public override void OnFrameworkInitializationCompleted() {
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
+            desktop.MainWindow = new MainWindow {
                 DataContext = new MainViewModel(),
             };
         }

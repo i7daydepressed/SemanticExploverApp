@@ -4,13 +4,12 @@ using System.Text.Json.Serialization;
 
 namespace SemanticExploverApp.Models;
 
-public sealed record KnowledgeSource
-{
+public sealed record KnowledgeSource { // источник знаний
     public required string Id { get; init; }
     public required string Title { get; init; }
-    public required string Kind { get; init; }
-    public string Description { get; init; } = string.Empty;
+    public required string Kind { get; init; } // вид источника
+    public string Description { get; init; } = string.Empty; // пояснение к источнику
 
-    [JsonExtensionData]
-    public Dictionary<string, JsonElement>? AdditionalProperties { get; init; }
+    [JsonExtensionData] // неизвестные поля JSON кладем в AdditionalProperties
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; init; } // дополнительные поля JSON: имя → значение
 }

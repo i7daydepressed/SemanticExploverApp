@@ -6,7 +6,7 @@ using SemanticExploverApp.Services;
 
 namespace SemanticExploverApp.ViewModels;
 
-public partial class MainViewModel {
+public partial class MainViewModel { // команды запросов и ответы
     private readonly NetworkQueryService queryService = new NetworkQueryService();
 
     [ObservableProperty]
@@ -20,6 +20,7 @@ public partial class MainViewModel {
 
     public ObservableCollection<QueryResultItem> QueryResultItems { get; } = new ObservableCollection<QueryResultItem>();
 
+    // заменяем строки ответа и снимаем выделение
     partial void OnQueryResultChanged(NetworkQueryResult value) {
         SelectedResultItem = null;
         // список остается тем же объектом, Clear сообщает интерфейсу об удалении старых строк
@@ -29,14 +30,18 @@ public partial class MainViewModel {
         }
     }
 
+    // проверяем готовность параметров поиска соседей
     private bool CanFindNeighbors() => CanConfigureQuery && QuerySource is not null &&
         QueryRelation is not null && NeighborDirectionIndex is 0 or 1;
 
+    // проверяем готовность параметров поиска по иерархии
     private bool CanFindHierarchy() => CanConfigureQuery && HierarchyClass is not null &&
         HierarchyClass.Kind == "class" && HierarchyDirectionIndex is 0 or 1;
 
+    // проверяем готовность параметров поиска пути
     private bool CanFindPath() => CanConfigureQuery && QuerySource is not null && QueryTarget is not null;
 
+    // выполняем запрос соседей
     [RelayCommand(CanExecute = nameof(CanFindNeighbors))]
     private void FindNeighbors() {
         if (!CanFindNeighbors() || Network is null || QuerySource is null || QueryRelation is null) {
@@ -47,6 +52,7 @@ public partial class MainViewModel {
             Network, QuerySource.Id, QueryRelation.Id, incoming: NeighborDirectionIndex == 1));
     }
 
+    // выполняем запрос предков или потомков
     [RelayCommand(CanExecute = nameof(CanFindHierarchy))]
     private void FindHierarchy() {
         if (!CanFindHierarchy() || Network is null || HierarchyClass is null) {
@@ -57,6 +63,7 @@ public partial class MainViewModel {
             Network, HierarchyClass.Id, descendants: HierarchyDirectionIndex == 1));
     }
 
+    // выполняем запрос пути
     [RelayCommand(CanExecute = nameof(CanFindPath))]
     private void FindPath() {
         if (!CanFindPath() || Network is null || QuerySource is null || QueryTarget is null) {
@@ -66,17 +73,20 @@ public partial class MainViewModel {
         ShowQueryResult(queryService.FindPath(Network, QuerySource.Id, QueryTarget.Id));
     }
 
+    // принимаем ответ и открываем вкладку результата
     private void ShowQueryResult(NetworkQueryResult result) {
         SelectedResultItem = null;
         QueryResult = result;
         RightTabIndex = 0;
     }
 
+    // сбрасываем ответ в начальное состояние
     private void ResetQueryResults() {
         SelectedResultItem = null;
         QueryResult = NetworkQueryResult.NotRun;
     }
 
+    // выбираем узел из строки ответа
     partial void OnSelectedResultItemChanged(QueryResultItem? value) {
         if (value is not null) {
             // строка результата хранит настоящий узел, нижняя панель использует обычный путь выбора
